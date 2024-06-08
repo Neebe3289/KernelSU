@@ -3,7 +3,7 @@
 #include <linux/kobject.h>
 #include <linux/module.h>
 #include <linux/workqueue.h>
-#include "linux/init.h"
+#include <linux/init.h>
 
 #include "allowlist.h"
 #include "arch.h"
