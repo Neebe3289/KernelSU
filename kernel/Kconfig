@@ -21,6 +21,6 @@ config KSU_SAFE_MODE
 	default n
 	depends on KSU
 	help
-	This enables KernelSU Safe Mode.
+          Enable KernelSU safe mode.
 
 endmenu
