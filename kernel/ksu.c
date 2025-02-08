@@ -14,7 +14,7 @@
 #ifdef CONFIG_KSU_CMDLINE
 #include <linux/init.h>
 
-unsigned int enable_kernelsu = 1; // enabled by default
+static unsigned int enable_kernelsu = 1; // enabled by default
 
 static int __init read_kernelsu_state(char *s)
 {
@@ -24,17 +24,11 @@ static int __init read_kernelsu_state(char *s)
 }
 __setup("kernelsu.enabled=", read_kernelsu_state);
 
-unsigned int get_ksu_state(void)
-{
-	return enable_kernelsu;
-}
-
+// use boolean to simplify things up
+bool get_ksu_state(void) { return enable_kernelsu >= 1; }
 #else
-unsigned int get_ksu_state(void)
-{
-	return 1;
-}
-#endif /* CONFIG_KSU_CMDLINE */
+bool get_ksu_state(void) { return true; }
+#endif
 
 static struct workqueue_struct *ksu_workqueue;
 
@@ -52,6 +46,7 @@ extern int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
 int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
 			void *envp, int *flags)
 {
+	if (!get_ksu_state()) { return 0; }
 	ksu_handle_execveat_ksud(fd, filename_ptr, argv, envp, flags);
 	return ksu_handle_execveat_sucompat(fd, filename_ptr, argv, envp,
 					    flags);

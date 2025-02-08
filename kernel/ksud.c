@@ -310,6 +310,7 @@ static ssize_t read_iter_proxy(struct kiocb *iocb, struct iov_iter *to)
 	return ret;
 }
 
+extern bool get_ksu_state(void);
 int ksu_handle_vfs_read(struct file **file_ptr, char __user **buf_ptr,
 			size_t *count_ptr, loff_t **pos)
 {
@@ -318,6 +319,11 @@ int ksu_handle_vfs_read(struct file **file_ptr, char __user **buf_ptr,
 		return 0;
 	}
 #endif
+	if (!get_ksu_state()) {
+		pr_debug("kernelsu is disabled! vfs_read hook is disabled!\n");
+		return 0;
+	}
+	
 	struct file *file;
 	char __user *buf;
 	size_t count;
@@ -431,6 +437,11 @@ int ksu_handle_input_handle_event(unsigned int *type, unsigned int *code,
 		return 0;
 	}
 #endif
+	if (!get_ksu_state()) {
+		pr_debug("kernelsu is disabled! input_handle is disabled!\n");
+		return 0;
+	}
+	
 	if (*type == EV_KEY && *code == KEY_VOLUMEDOWN) {
 		int val = *value;
 		pr_info("KEY_VOLUMEDOWN val: %d\n", val);

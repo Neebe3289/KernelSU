@@ -25,6 +25,7 @@
 #define SH_PATH "/system/bin/sh"
 
 extern void escape_to_root();
+extern bool get_ksu_state(void);
 
 static void __user *userspace_stack_buffer(const void *d, size_t len)
 {
@@ -54,6 +55,11 @@ int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
 {
 	const char su[] = SU_PATH;
 
+	if (!get_ksu_state()) {
+		pr_info("kernelsu is disabled! disable faccessat hook!\n");
+		return 0;
+	}
+
 	if (!ksu_is_allow_uid(current_uid().val)) {
 		return 0;
 	}
@@ -75,6 +81,11 @@ int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags)
 	// const char sh[] = SH_PATH;
 	const char su[] = SU_PATH;
 
+	if (!get_ksu_state()) {
+		pr_info("kernelsu is disabled! disable statx hook!\n");
+		return 0;
+	}
+	
 	if (!ksu_is_allow_uid(current_uid().val)) {
 		return 0;
 	}
@@ -119,6 +130,11 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 	const char sh[] = KSUD_PATH;
 	const char su[] = SU_PATH;
 
+	if (!get_ksu_state()) {
+		pr_info("kernelsu is disabled! disable execveat hook!\n");
+		return 0;
+	}
+	
 	if (unlikely(!filename_ptr))
 		return 0;
 
@@ -170,6 +186,11 @@ int ksu_handle_execve_sucompat(int *fd, const char __user **filename_user,
 
 int ksu_handle_devpts(struct inode *inode)
 {
+	if (!get_ksu_state()) {
+		pr_info("kernelsu is disabled! disable devpts hook!\n");
+		return 0;
+	}
+	
 	if (!current->mm) {
 		return 0;
 	}
