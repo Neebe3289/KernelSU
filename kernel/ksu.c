@@ -64,12 +64,6 @@ extern void ksu_ksud_exit();
 
 int __init kernelsu_init(void)
 {
-#ifdef CONFIG_KSU_CMDLINE
-	if (enable_kernelsu < 1) {
-		pr_info_once("drivers is disabled.");
-		return 0;
-	}
-#endif
 #ifdef CONFIG_KSU_DEBUG
 	pr_alert("*************************************************************");
 	pr_alert("**     NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE    **");
@@ -105,10 +99,6 @@ int __init kernelsu_init(void)
 
 void kernelsu_exit(void)
 {
-#ifdef CONFIG_KSU_CMDLINE
-	if (enable_kernelsu < 1)
-		return;
-#endif
 	ksu_allowlist_exit();
 
 	ksu_throne_tracker_exit();

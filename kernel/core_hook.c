@@ -45,8 +45,9 @@
 #include "throne_tracker.h"
 #include "kernel_compat.h"
 
+// checks get_cred_rcu, ignore if >= 5.0
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0) ||	\
-	defined(KSU_COMPAT_GET_CRED_RCU)
+	defined(KSU_OPT_GET_CRED_RCU)
 #define KSU_GET_CRED_RCU
 #endif
 
@@ -133,22 +134,23 @@ static void disable_seccomp(void)
 #endif
 }
 
-/* 
- * If kernel devs not backport this, we'll enable this function
- * (Must put this on kernel_compat.c, but anyway)
- */
+// Enable this if no get_cred_rcu inside cred.h
 #ifndef KSU_GET_CRED_RCU
 static inline const struct cred *get_cred_rcu(const struct cred *cred)
 {
 	struct cred *nonconst_cred = (struct cred *) cred;
-	if (!cred)
+	if (!cred) {
 		return NULL;
-#ifdef KSU_COMPAT_LONG_INC
-	if (!atomic_long_inc_not_zero(&nonconst_cred->usage))
+	}
+#ifdef KSU_COMPAT_ATOMIC_LONG
+	if (!atomic_long_inc_not_zero(&nonconst_cred->usage)) {
+		return NULL;
+	}
 #else
-	if (!atomic_inc_not_zero(&nonconst_cred->usage))
-#endif		
+	if (!atomic_inc_not_zero(&nonconst_cred->usage)) {
 		return NULL;
+	}
+#endif	
 	validate_creds(cred);
 	nonconst_cred->non_rcu = 0;
 	return cred;

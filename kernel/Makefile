@@ -16,17 +16,19 @@ ccflags-y += -I$(objtree)/security/selinux -include $(srctree)/include/uapi/asm-
 
 # Do checks before compile
 ifneq ($(shell grep -q "int path_umount" $(srctree)/fs/namespace.c; echo $$?),0)
-$(error -- No path_umount detected !! Read: https://kernelsu.org/guide/how-to-integrate-for-non-gki.html#how-to-backport-path-umount)
+$(error -- Must backport path_umount!! Read: https://kernelsu.org/guide/how-to-integrate-for-non-gki.html#how-to-backport-path-umount)
 endif
 
 # GKI manual hook checks
 # https://github.com/Pzqqt/android_kernel_xiaomi_marble/commit/5b8596b5604bcd0e6e12697a01136a0bb9eb0257
 ifeq ($(CONFIG_KSU_MANUAL_HOOK),y)
+$(info -- KernelSU: Use Manual hook !!)
 ifeq ($(CONFIG_KSU),m)
 $(error CONFIG_KSU_MANUAL_HOOK cannot be enabled when compiling KernelSU as LKM!)
 endif
 else
 ifeq ($(CONFIG_KPROBES),y)
+$(info -- KernelSU: Use KProbe hook !!)
 ccflags-y += -DKSU_HOOK_WITH_KPROBES
 endif
 endif
@@ -46,37 +48,41 @@ $(warning "KSU_GIT_VERSION not defined! It is better to make KernelSU a git subm
 ccflags-y += -DKSU_VERSION=16
 endif
 
+# SELinux checks
 ifeq ($(shell grep -q " current_sid(void)" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
 ccflags-y += -DKSU_COMPAT_HAS_CURRENT_SID
 endif
-
 ifeq ($(shell grep -q "struct selinux_state " $(srctree)/security/selinux/include/security.h; echo $$?),0)
 ccflags-y += -DKSU_COMPAT_HAS_SELINUX_STATE
 endif
 
-# This feature was introduced in linux 5.0-rc1
+# Optional backports checks
+ifeq ($(shell grep -q "strncpy_from_user_nofault" $(srctree)/include/linux/uaccess.h; echo $$?),0)
+ccflags-y += -DKSU_OPT_STRNCPY
+endif
+ifeq ($(shell grep -q "ssize_t kernel_read" $(srctree)/fs/read_write.c; echo $$?),0)
+ccflags-y += -DKSU_OPT_KERNEL_READ
+endif
+ifeq ($(shell grep "ssize_t kernel_write" $(srctree)/fs/read_write.c | grep -q "const void" ; echo $$?),0)
+ccflags-y += -DKSU_OPT_KERNEL_WRITE
+endif
+
+# This feature was introduced in linux 5.0-rc1, get_cred_rcu checks
 ifeq ($(shell grep -q "get_cred_rcu" $(srctree)/include/linux/cred.h; echo $$?),0)
-ccflags-y += -DKSU_COMPAT_GET_CRED_RCU
+ccflags-y += -DKSU_OPT_GET_CRED_RCU
 else
 # https://github.com/gregkh/linux/commit/123e44b9a49a42ff5313ec65256f1540d7c52fa0
 ifeq ($(shell grep -q "atomic_long_inc" $(srctree)/include/linux/cred.h; echo $$?),0)
 $(info -- KernelSU compat: atomic_long_t detected.)
-ccflags-y += -DKSU_COMPAT_LONG_INC
+ccflags-y += -DKSU_COMPAT_ATOMIC_LONG
 else
 $(info -- KernelSU compat: atomic_t detected.)
 endif
 endif
 
-ifeq ($(shell grep -q "strncpy_from_user_nofault" $(srctree)/include/linux/uaccess.h; echo $$?),0)
-ccflags-y += -DKSU_STRNCPY_FROM_USER_NOFAULT
-endif
-
-ifeq ($(shell grep -q "ssize_t kernel_read" $(srctree)/fs/read_write.c; echo $$?),0)
-ccflags-y += -DKSU_KERNEL_READ
-endif
-
-ifeq ($(shell grep "ssize_t kernel_write" $(srctree)/fs/read_write.c | grep -q "const void" ; echo $$?),0)
-ccflags-y += -DKSU_KERNEL_WRITE
+# Checks for Samsung UH driver
+ifeq ($(shell grep -q "CONFIG_KDP_CRED" $(srctree)/kernel/cred.c; echo $$?),0)
+ccflags-y += -DUH_DRIVER_EXIST
 endif
 
 ifndef KSU_EXPECTED_SIZE
@@ -92,15 +98,9 @@ ccflags-y += -DKSU_MANAGER_PACKAGE=\"$(KSU_MANAGER_PACKAGE)\"
 $(info -- KernelSU Manager package name: $(KSU_MANAGER_PACKAGE))
 endif
 
-# checks is it Samsung kernels or not
-# TODO: Search for accurate detection
-ifeq ($(shell test -d $(srctree)/drivers/samsung; echo $$?),0)
-ccflags-y += -DIS_SAMSUNG_KERNEL
-endif
-
-$(info -- Official KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))
-$(info -- Official KernelSU Manager signature hash: $(KSU_EXPECTED_HASH))
-$(info -- Supported Unofficial Manager: rsuntk (Non-GKI), 5ec1cff (GKI)) 
+$(info -- KernelSU Manager signature size: $(KSU_EXPECTED_SIZE))
+$(info -- KernelSU Manager signature hash: $(KSU_EXPECTED_HASH))
+$(info -- Supported Manager: tiann, rsuntk, 5ec1cff) 
 
 ccflags-y += -DEXPECTED_SIZE=$(KSU_EXPECTED_SIZE)
 ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
