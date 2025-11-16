@@ -1,0 +1,125 @@
+name: Build Manager MOD
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-all:
+    name: Build ksud & manager
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        spoofed: [ false, true ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup need_upload
+        id: need_upload
+        run: |
+          if [ ! -z "${{ secrets.BOT_TOKEN }}" ]; then
+            echo "UPLOAD=true" >> $GITHUB_OUTPUT
+          else
+            echo "UPLOAD=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup spoofing
+        if: matrix.spoofed == true
+        id: run_spoof
+        run: |
+          word1=$(LC_ALL=C tr -dc 'a-z' </dev/urandom 2>/dev/null | head -c6)
+          word2=$(LC_ALL=C tr -dc 'a-z' </dev/urandom 2>/dev/null | head -c6)
+          word3=$(LC_ALL=C tr -dc 'a-z' </dev/urandom 2>/dev/null | head -c6)
+
+          SPOOF_PKG="$word1.$word2.$word3"
+          echo "SPOOF_PKG_NAME=$SPOOF_PKG" >> $GITHUB_ENV
+
+          export word1 word2 word3
+          targets=("manager" "userspace")
+
+          for dir in "${targets[@]}"; do
+              find "$dir" -depth -type d -name 'me' -execdir mv {} "$word1" \; 2>/dev/null || true
+              find "$dir" -depth -type d -name 'weishu' -execdir mv {} "$word2" \; 2>/dev/null || true
+              find "$dir" -depth -type d -name 'kernelsu' -execdir mv {} "$word3" \; 2>/dev/null || true
+          done
+
+          for dir in "${targets[@]}"; do
+              find "$dir" -type f -exec sed -i \
+                  -e "s/me\.weishu\.kernelsu/$word1.$word2.$word3/g" \
+                  -e "s/me\/weishu\/kernelsu/$word1\/$word2\/$word3/g" \
+                  -e "s/me_weishu_kernelsu/${word1}_${word2}_${word3}/g" {} +
+          done
+
+      - name: Setup rustup
+        run: |
+          rustup update stable
+          rustup target add aarch64-linux-android
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: userspace/ksud
+          cache-targets: false
+
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r29
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Write key
+        working-directory: ./manager
+        run: |
+            {
+              echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
+              echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
+              echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
+              echo KEYSTORE_FILE='dummy.keystore'
+            } >> gradle.properties
+
+      - name: Build ksud
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
+          KSU_PACKAGE_NAME: ${{ matrix.spoofed && env.SPOOF_PKG_NAME || '' }}
+        run: |
+          source .github/scripts/setup-rust-build.sh aarch64-linux-android 26
+          cargo build --target aarch64-linux-android --release --manifest-path ./Cargo.toml
+
+      - name: Setup native libksud
+        run: |
+          mkdir -p manager/app/src/main/jniLibs/arm64-v8a
+          cp target/aarch64-linux-android/release/ksud manager/app/src/main/jniLibs/arm64-v8a/libksud.so
+          chmod 644 manager/app/src/main/jniLibs/arm64-v8a/libksud.so
+
+      - name: Build manager
+        working-directory: ./manager
+        run: |
+          if [ "${{ matrix.spoofed }}" = "true" ]; then
+            ./gradlew clean assembleRelease -PKSU_PACKAGE_NAME=${{ env.SPOOF_PKG_NAME }} -PKSU_NAME="KernelSU Spoofed"
+          else
+            ./gradlew clean assembleRelease
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.spoofed && 'manager-spoofed' || 'manager' }}
+          path: manager/app/build/outputs/apk/release/*.apk
