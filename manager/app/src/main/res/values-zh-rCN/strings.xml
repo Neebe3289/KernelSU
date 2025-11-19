@@ -193,4 +193,8 @@
     <string name="module_shortcut_permission_tip_default">若创建快捷方式失败，请在系统设置中为本应用启用桌面快捷方式权限。</string>
     <string name="no_such_module">模块 %s 不存在</string>
     <string name="module_unavailable">模块 %s 被禁用，待更新或待卸载</string>
+    <string name="allow_shell">总是给 shell 授予 root 权限</string>
+    <string name="allow_shell_summary">用于救砖</string>
+    <string name="enable_adb">启动时强制启用 ADB 调试</string>
+    <string name="enable_adb_summary">用于救砖</string>
 </resources>

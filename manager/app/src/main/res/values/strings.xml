@@ -196,4 +196,8 @@
     <string name="module_shortcut_permission_tip_default">If shortcut creation fails, please enable desktop shortcut permission for this app in system settings.</string>
     <string name="no_such_module">Module %s does not exist</string>
     <string name="module_unavailable">Module %s is disabled, updating, or pending removal</string>
+    <string name="allow_shell">Always grant root to Shell</string>
+    <string name="allow_shell_summary">For rescue from bootloop.</string>
+    <string name="enable_adb">Force enable adb on boot</string>
+    <string name="enable_adb_summary">For rescue from bootloop.</string>
 </resources>
