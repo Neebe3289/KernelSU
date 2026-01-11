@@ -144,3 +144,7 @@ export function getPackagesInfo(packages) {
 export function exit() {
   ksu.exit();
 }
+
+export function fileOutputStream() {
+  return ksu.fileOutputStream();
+}

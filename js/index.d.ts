@@ -56,6 +56,16 @@ declare function getPackagesInfo(packages: string[]): PackagesInfo[];
 
 declare function exit();
 
+interface FileOutputStream {
+    open(path: string, append?: boolean): string;
+    writeByte(id: string, b: number): boolean;
+    write(id: string, base64: string): boolean;
+    flush(id: string): boolean;
+    close(id: string): boolean;
+}
+
+declare function fileOutputStream(): FileOutputStream;
+
 export {
     exec,
     spawn,
@@ -66,4 +76,5 @@ export {
     listPackages,
     getPackagesInfo,
     exit,
+    fileOutputStream,
 }

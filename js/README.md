@@ -186,3 +186,36 @@ Exit the current WebUI activity.
 import { exit } from 'kernelsu';
 exit();
 ```
+
+### fileOutputStream
+
+Provides a streaming interface for writing files.
+
+```javascript
+import { fileOutputStream } from 'kernelsu';
+
+const fos = fileOutputStream();
+const streamId = fos.open('/data/adb/test.file', false);
+
+if (streamId) {
+  // Write a single byte
+  fos.writeByte(streamId, 65); // 'A'
+
+  // Write Base64 data
+  const base64Data = btoa("Hello KernelSU!");
+  fos.write(streamId, base64Data);
+
+  fos.flush(streamId);
+  fos.close(streamId);
+}
+```
+
+#### FileOutputStream
+
+An object returned by `fileOutputStream()` that contains:
+
+- `open(path: string, append?: boolean): string` - Opens a file for writing and returns a unique stream ID. Returns an empty string on failure.
+- `writeByte(id: string, byte: number): boolean` - Writes a single byte to the stream.
+- `write(id: string, base64: string): boolean` - Writes Base64-encoded data to the stream.
+- `flush(id: string): boolean` - Flushes the buffered data to the file.
+- `close(id: string): boolean` - Closes the stream and releases resources.
