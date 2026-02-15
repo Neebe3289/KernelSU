@@ -93,6 +93,7 @@ import me.weishu.kernelsu.ui.theme.AppSettings
 import me.weishu.kernelsu.ui.theme.ColorMode
 import me.weishu.kernelsu.ui.theme.KernelSUTheme
 import me.weishu.kernelsu.ui.theme.ThemeController
+import me.weishu.kernelsu.ui.util.LocalShowSwitchIcon
 import me.weishu.kernelsu.ui.util.LocalSnackbarHost
 import me.weishu.kernelsu.ui.util.install
 import me.weishu.kernelsu.ui.util.rootAvailable
@@ -143,6 +144,10 @@ class MainActivity : ComponentActivity() {
             }
 
             val prefs = remember { getSharedPreferences("settings", MODE_PRIVATE) }
+            val showSwitchIconState = rememberSaveable {
+                mutableStateOf(prefs.getBoolean("show_switch_icon", false))
+            }
+
             val themeKeys = setOf(
                 "color_mode",
                 "key_color",
@@ -153,6 +158,9 @@ class MainActivity : ComponentActivity() {
                 SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
                     if (key in themeKeys) {
                         appSettingsState.value = ThemeController.getAppSettings(this@MainActivity)
+                    }
+                    if (key == "show_switch_icon") {
+                        showSwitchIconState.value = prefs.getBoolean("show_switch_icon", false)
                     }
                 }
             }
@@ -171,6 +179,7 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalNavigator provides navigator,
                     LocalSnackbarHost provides snackBarHostState,
+                    LocalShowSwitchIcon provides showSwitchIconState.value,
                 ) {
                     HandleDeepLink(
                         intentState = intentState.collectAsState(),

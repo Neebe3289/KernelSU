@@ -91,6 +91,7 @@ import com.materialkolor.rememberDynamicColorScheme
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.ExpressiveColumn
 import me.weishu.kernelsu.ui.component.ExpressiveDropdownItem
+import me.weishu.kernelsu.ui.component.ExpressiveSwitchItem
 import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.theme.ColorMode
 import me.weishu.kernelsu.ui.theme.ThemeController
@@ -126,6 +127,8 @@ fun ColorPaletteScreen() {
     var colorSpec by remember { mutableStateOf(appSettings.colorSpec) }
 
     var officialIcon by remember { mutableStateOf(prefs.getBoolean("enable_official_launcher", false)) }
+    var classicUi by remember { mutableStateOf(prefs.getBoolean("classic_ui", false)) }
+    var showSwitchIcon by remember { mutableStateOf(prefs.getBoolean("show_switch_icon", false)) }
 
     Scaffold(
         topBar = {
@@ -156,6 +159,7 @@ fun ColorPaletteScreen() {
                 paletteStyle = colorStyle,
                 colorSpec = colorSpec,
                 officialIcon = officialIcon,
+                classicUi = classicUi,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -323,6 +327,26 @@ fun ColorPaletteScreen() {
                                     prefs.edit { putString("color_spec", if (index == 1) "SPEC_2025" else "SPEC_2021") }
                                 }
                             )
+                        },
+                        {
+                            ExpressiveSwitchItem(
+                                title = stringResource(R.string.settings_classic_home_ui),
+                                checked = classicUi,
+                                onCheckedChange = {
+                                    classicUi = it
+                                    prefs.edit { putBoolean("classic_ui", it) }
+                                }
+                            )
+                        },
+                        {
+                            ExpressiveSwitchItem(
+                                title = stringResource(R.string.settings_switch_icon),
+                                checked = showSwitchIcon,
+                                onCheckedChange = {
+                                    showSwitchIcon = it
+                                    prefs.edit { putBoolean("show_switch_icon", it) }
+                                }
+                            )
                         }
                     )
                 )
@@ -342,6 +366,7 @@ private fun ThemePreviewCard(
     paletteStyle: PaletteStyle = PaletteStyle.TonalSpot,
     colorSpec: ColorSpec.SpecVersion = ColorSpec.SpecVersion.SPEC_2021,
     officialIcon: Boolean = false,
+    classicUi: Boolean = false,
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -414,10 +439,27 @@ private fun ThemePreviewCard(
                     ) {
                         TonalCard(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            modifier = Modifier.fillMaxWidth().height(64.dp),
+                            modifier = Modifier.fillMaxWidth().height(if (classicUi) 72.dp else 48.dp),
                             shape = RoundedCornerShape(12.dp),
                             content = { }
                         )
+                        if (!classicUi) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                TonalCard(
+                                    modifier = Modifier.weight(1f).height(40.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    content = { }
+                                )
+                                TonalCard(
+                                    modifier = Modifier.weight(1f).height(40.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    content = { }
+                                )
+                            }
+                        }
                         TonalCard(
                             modifier = Modifier.fillMaxWidth().height(128.dp),
                             shape = RoundedCornerShape(12.dp),
