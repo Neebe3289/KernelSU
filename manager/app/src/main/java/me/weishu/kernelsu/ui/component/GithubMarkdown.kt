@@ -18,6 +18,7 @@ import android.widget.FrameLayout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.webkit.WebViewAssetLoader
@@ -50,7 +52,7 @@ import kotlin.math.abs
 fun GithubMarkdown(
     content: String,
     isLoading: MutableState<Boolean> = mutableStateOf(true),
-    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceContainer,
+    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
 ) {
     isLoading.value = true
     val context = LocalContext.current
