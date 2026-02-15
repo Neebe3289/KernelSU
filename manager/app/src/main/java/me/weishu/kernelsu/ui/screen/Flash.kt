@@ -57,6 +57,7 @@ import me.weishu.kernelsu.ui.navigation3.LocalNavigator
 import me.weishu.kernelsu.ui.util.FlashResult
 import me.weishu.kernelsu.ui.util.LkmSelection
 import me.weishu.kernelsu.ui.util.LocalSnackbarHost
+import me.weishu.kernelsu.ui.util.flashAnyKernelZip
 import me.weishu.kernelsu.ui.util.flashModule
 import me.weishu.kernelsu.ui.util.installBoot
 import me.weishu.kernelsu.ui.util.reboot
@@ -115,26 +116,44 @@ fun FlashScreen(flashIt: FlashIt) {
     val confirmDialog = rememberConfirmDialog()
 
     LaunchedEffect(flashIt) {
-        val flashTarget = if (flashIt is FlashIt.FlashModules && !flashIt.skipConfirm) {
-            val uris = flashIt.uris
-            val moduleNames = uris.mapIndexed { index, uri ->
-                "\n${index + 1}. ${uri.getFileName(context)}"
-            }.joinToString("")
-            val result = confirmDialog.awaitConfirm(
-                title = context.getString(R.string.module),
-                content = context.getString(R.string.module_install_prompt_with_name, moduleNames),
-                markdown = true
-            )
+        val flashTarget = when (flashIt) {
+            is FlashIt.FlashModules if !flashIt.skipConfirm -> {
+                val uris = flashIt.uris
+                val moduleNames = uris.mapIndexed { index, uri ->
+                    "\n${index + 1}. ${uri.getFileName(context)}"
+                }.joinToString("")
+                val result = confirmDialog.awaitConfirm(
+                    title = context.getString(R.string.module),
+                    content = context.getString(R.string.module_install_prompt_with_name, moduleNames),
+                    markdown = true
+                )
 
-            if (result == ConfirmResult.Confirmed) {
-                flashIt
-            } else {
-                // User cancelled, go back
-                navigator.pop()
-                null
+                if (result == ConfirmResult.Confirmed) {
+                    flashIt
+                } else {
+                    // User cancelled, go back
+                    navigator.pop()
+                    null
+                }
             }
-        } else {
-            flashIt
+
+            is FlashIt.FlashAnyKernel if !flashIt.skipConfirm -> {
+                val fileName = flashIt.uri.getFileName(context)
+                val result = confirmDialog.awaitConfirm(
+                    title = context.getString(R.string.anykernel_install),
+                    content = fileName,
+                    markdown = true
+                )
+
+                if (result == ConfirmResult.Confirmed) {
+                    flashIt
+                } else {
+                    navigator.pop()
+                    null
+                }
+            }
+
+            else -> flashIt
         }
 
         if (flashTarget == null) {
@@ -259,6 +278,9 @@ sealed class FlashIt : Parcelable {
     data class FlashModules(val uris: List<Uri>, val skipConfirm: Boolean = false) : FlashIt()
 
     @Parcelize
+    data class FlashAnyKernel(val uri: Uri, val skipConfirm: Boolean = false) : FlashIt()
+
+    @Parcelize
     data object FlashRestore : FlashIt()
 
     @Parcelize
@@ -285,6 +307,12 @@ fun flashIt(
         is FlashIt.FlashModules -> {
             flashModulesSequentially(flashIt.uris, onStdout, onStderr)
         }
+
+        is FlashIt.FlashAnyKernel -> flashAnyKernelZip(
+            flashIt.uri,
+            onStdout,
+            onStderr
+        )
 
         FlashIt.FlashRestore -> restoreBoot(onStdout, onStderr)
 
