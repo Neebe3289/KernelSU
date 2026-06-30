@@ -120,6 +120,7 @@ android {
         targetSdk = androidTargetSdkVersion
         versionCode = managerVersionCode
         versionName = managerVersionName
+        applicationId = "com.neebestuff.manager"
 
         buildConfigField("boolean", "IS_PR_BUILD", isPrBuild.toString())
 

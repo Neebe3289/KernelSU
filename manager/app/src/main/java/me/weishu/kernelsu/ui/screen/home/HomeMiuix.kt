@@ -114,9 +114,9 @@ fun HomePagerMiuix(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        if (state.checkUpdateEnabled) {
-                            UpdateCard(state = state, actions = actions)
-                        }
+//                        if (state.checkUpdateEnabled) {
+//                            UpdateCard(state = state, actions = actions)
+//                        }
                         if (state.showManagerPrBuildWarning) {
                             WarningCard(stringResource(id = R.string.home_pr_build_warning))
                         } else if (state.showKernelPrBuildWarning) {
