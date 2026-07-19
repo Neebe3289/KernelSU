@@ -117,9 +117,9 @@ jobs:
         if: ${{ ( github.event_name != 'pull_request' ) || github.ref_type == 'tag' }}
         run: |
             {
-              echo KEYSTORE_PASSWORD='password'
-              echo KEY_ALIAS='alias'
-              echo KEY_PASSWORD='password'
+              echo KEYSTORE_PASSWORD='${{ secrets.KEYSTORE_PASSWORD }}'
+              echo KEY_ALIAS='${{ secrets.KEY_ALIAS }}'
+              echo KEY_PASSWORD='${{ secrets.KEY_PASSWORD }}'
               echo KEYSTORE_FILE='dummy.keystore'
             } >> gradle.properties
 
@@ -233,9 +233,9 @@ jobs:
         if: ${{ ( github.event_name != 'pull_request' ) || github.ref_type == 'tag' }}
         run: |
           echo "SIGN_KEYSTORE_FILE=manager/dummy.keystore" >> $GITHUB_ENV
-          echo "SIGN_KEY_ALIAS=alias" >> $GITHUB_ENV
-          echo "SIGN_KEYSTORE_PASSWORD=password" >> $GITHUB_ENV
-          echo "SIGN_KEY_PASSWORD=password" >> $GITHUB_ENV
+          echo "SIGN_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "SIGN_KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "SIGN_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Repack and resign
         if: ${{ ( github.event_name != 'pull_request' ) || github.ref_type == 'tag' }}
