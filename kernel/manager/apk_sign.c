@@ -388,8 +388,9 @@ bool is_manager_apk(char *path)
 	}
 #endif
 
-	return (check_v2_signature(path, 0x363, "4359c171f32543394cbc23ef908c4bb94cad7c8087002ba164c8230948c21549") // dummy.keystore
-	|| check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH)  // kernelsu official
-	|| check_v2_signature(path, 0x375, "484fcba6e6c43b1fb09700633bf2fb4758f13cb0b2f4457b80d075084b26c588")  // KOWX712/KernelSU
+	return (check_v2_signature(path, 0x388, "75df2885869bc947e1a524b2c793986a02bbb1427be21630e7b3ab226581b088") // My sign
+	|| check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH)  // KernelSU Official
+	|| check_v2_signature(path, 0x363, "4359c171f32543394cbc23ef908c4bb94cad7c8087002ba164c8230948c21549") // backslashxx/XXKSU
+	|| check_v2_signature(path, 0x375, "484fcba6e6c43b1fb09700633bf2fb4758f13cb0b2f4457b80d075084b26c588")  // KOWX712/KowSU
 	);
 }
